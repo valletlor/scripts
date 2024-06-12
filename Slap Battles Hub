@@ -1,0 +1,1 @@
+loadstring(game:HttpGet("https://rawscripts.net/raw/Slap-Battles-Open-source-for-9484", true))()
