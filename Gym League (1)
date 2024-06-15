@@ -1,0 +1,104 @@
+local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Turtle-Brand/Turtle-Lib/main/source.lua"))()
+
+local window = lib:Window("Gym League")
+
+local autoTrainEnabled = false
+local autoTrainPaused = false
+local autoCompetitionEnabled = false
+local autoSetTreadmillEnabled = false
+local autoLoadEnabled = false
+
+--[[
+-- Function to check stamina and pause auto train if necessary
+local function checkStamina()
+    local staminaUI = game:GetService("StarterGui").Main.BottomCenter:FindFirstChild("Stamina")
+    if staminaUI and tonumber(staminaUI.Text) <= tonumber(inputBox.Text) then
+        autoTrainPaused = true
+    else
+        autoTrainPaused = false
+    end
+end
+]]
+
+-- Input box to set the stamina threshold for pausing auto train
+local inputBox = window:Box("Stamina Threshold", function(text, focuslost)
+    if focuslost then
+        -- Stamina threshold set
+    end
+end)
+
+-- Toggle for Auto Train
+window:Toggle("Auto Train", false, function(state)
+    autoTrainEnabled = state
+    spawn(function()
+        while autoTrainEnabled do
+            -- if not autoTrainPaused then
+                local clickButton = game:GetService("Players").LocalPlayer.PlayerGui.Main.RightCenter:FindFirstChild("click")
+                if clickButton and clickButton.Visible then
+                    local VirtualInputManager = game:GetService("VirtualInputManager")
+                    local screenPosition = clickButton.AbsolutePosition
+                    local clickX = screenPosition.X + clickButton.AbsoluteSize.X / 2
+                    local clickY = screenPosition.Y + clickButton.AbsoluteSize.Y / 2
+                    VirtualInputManager:SendMouseButtonEvent(clickX, clickY, 0, true, game, 0)
+                    VirtualInputManager:SendMouseButtonEvent(clickX, clickY, 0, false, game, 0)
+                end
+            -- end
+            wait(0.2)  -- Small delay to allow toggling off
+        end
+    end)
+end)
+
+-- Toggle for Auto Load
+window:Toggle("Auto Load", false, function(state)
+    autoLoadEnabled = state
+    spawn(function()
+        while autoLoadEnabled do
+            for _, equipment in pairs(workspace.Equipments:GetChildren()) do
+                if not autoLoadEnabled then break end
+                if equipment.Name ~= "treadmill" then
+                    game:GetService("ReplicatedStorage"):WaitForChild("common"):WaitForChild("packages"):WaitForChild("_Index"):WaitForChild("sleitnick_knit@1.5.1"):WaitForChild("knit"):WaitForChild("Services"):WaitForChild("EquipmentService"):WaitForChild("RF"):WaitForChild("AutoLoad"):InvokeServer()
+                end
+            end
+        end
+    end)
+end)
+
+-- Auto Set Treadmill Speed
+local function autoSetTreadmillSpeed()
+    while autoSetTreadmillEnabled do
+        for _, equipment in pairs(workspace.Equipments:GetChildren()) do
+            if not autoSetTreadmillEnabled then break end
+            if equipment:IsA("Model") and equipment.Name == "treadmill" then
+                local args = {
+                    [1] = true
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("common"):WaitForChild("packages"):WaitForChild("_Index"):WaitForChild("sleitnick_knit@1.5.1"):WaitForChild("knit"):WaitForChild("Services"):WaitForChild("EquipmentService"):WaitForChild("RF"):WaitForChild("ChangeSpeed"):InvokeServer(unpack(args))
+            end
+        end
+    end
+end
+
+window:Toggle("Auto Set Treadmill Speed", false, function(state)
+    autoSetTreadmillEnabled = state
+    if state then
+        spawn(autoSetTreadmillSpeed)
+    end
+end)
+-- Toggle for Auto Competition
+window:Toggle("Auto Competition", false, function(state)
+    autoCompetitionEnabled = state
+    spawn(function()
+        while autoCompetitionEnabled do
+            local countdownUI = game:GetService("Players").LocalPlayer.PlayerGui.Podium:FindFirstChild("countdown")
+            if countdownUI then
+                game:GetService("ReplicatedStorage"):WaitForChild("common"):WaitForChild("packages"):WaitForChild("_Index"):WaitForChild("sleitnick_knit@1.5.1"):WaitForChild("knit"):WaitForChild("Services"):WaitForChild("PodiumService"):WaitForChild("RE"):WaitForChild("Event"):FireServer()
+            end
+            wait(0.01)  -- Very short delay to prevent crashing
+        end
+    end)
+end)
+
+-- Slider for Walk Speed
+window:Slider("Walk Speed", 16, 100, 20, function(value)
+    game:GetService("Players").LocalPlayer.Character.Humanoid.WalkSpeed = value
+end)
